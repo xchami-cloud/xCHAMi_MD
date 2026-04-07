@@ -1,5 +1,5 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
-const Groq = require("groq-sdk"); // Gemini වෙනුවට Groq SDK එක දැම්මා
+const Groq = require("groq-sdk");
 const TelegramBot = require('node-telegram-bot-api');
 const qrcode = require('qrcode');
 const axios = require("axios");
@@ -10,6 +10,9 @@ const CONFIG_API = "https://xchamiwpbot.free.nf/api.php";
 const UPDATE_API = "https://xchamiwpbot.free.nf/update_settings.php"; 
 const TELEGRAM_TOKEN = '8442632780:AAH2Qn37FZ3tWI2UWH1BkLL-ypgdYfG2ZCM';
 const MY_CHAT_ID = '5874012720';
+
+// GitHub Secrets වලින් API Key එක ලබා ගැනීම (Missing variable error එක විසඳීමට)
+const GROQ_KEY = process.env.GROQ_API_KEY;
 
 const tgBot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
@@ -40,7 +43,7 @@ async function startxCHAMi() {
                 ]
             }
         };
-        tgBot.sendMessage(MY_CHAT_ID, "👋 *xCHAMi MD CONTROL PANEL (GROQ)*\n\nGroq API Key එක Admin Panel එකට දමා ඇති බව තහවුරු කරගන්න.", { parse_mode: 'Markdown', ...opts });
+        tgBot.sendMessage(MY_CHAT_ID, "👋 *xCHAMi MD CONTROL PANEL (GROQ MODE)*\n\nපහත බොත්තම් මඟින් බොට් පාලනය කරන්න. API Key එක GitHub Secrets හරහා ක්‍රියාත්මක වේ.", { parse_mode: 'Markdown', ...opts });
     });
 
     tgBot.on('callback_query', async (query) => {
@@ -54,29 +57,26 @@ async function startxCHAMi() {
                 tgBot.answerCallbackQuery(query.id, { text: `Bot Status: ${status} ✅` });
             } catch (e) { tgBot.sendMessage(MY_CHAT_ID, "❌ Database Update Error!"); }
         } else if (data === 'status') {
-            const { data: s } = await axios.get(CONFIG_API);
-            tgBot.sendMessage(MY_CHAT_ID, `📊 *CURRENT SETTINGS*\n\n📌 *Status:* ${s.bot_status}\n🔑 *Groq Key:* \`${s.api_key.substring(0,10)}...\` \n📝 *Prompt:* ${s.system_prompt.substring(0,100)}...`, { parse_mode: 'Markdown' });
+            try {
+                const { data: s } = await axios.get(CONFIG_API);
+                tgBot.sendMessage(MY_CHAT_ID, `📊 *CURRENT SETTINGS*\n\n📌 *Status:* ${s.bot_status}\n🔑 *API Status:* GitHub Secret Active\n📝 *Prompt:* ${s.system_prompt.substring(0,100)}...`, { parse_mode: 'Markdown' });
+            } catch (e) { tgBot.sendMessage(MY_CHAT_ID, "❌ සර්වර් එකෙන් දත්ත ලබාගත නොහැක."); }
         } else if (data === 'help') {
-            tgBot.sendMessage(MY_CHAT_ID, "📝 *COMMAND LIST*\n\n1. `/setapi [Groq Key]` - Groq API Key දැමීමට\n2. `/setprompt [text]` - System Prompt වෙනස් කිරීමට", { parse_mode: 'Markdown' });
+            tgBot.sendMessage(MY_CHAT_ID, "📝 *COMMAND LIST*\n\n1. `/setprompt [text]` - System Prompt එක වෙනස් කිරීමට", { parse_mode: 'Markdown' });
         }
     });
 
     tgBot.on('message', async (msg) => {
         if (msg.chat.id.toString() !== MY_CHAT_ID || !msg.text) return;
         const text = msg.text;
-
-        if (text.startsWith('/setapi ')) {
-            const val = text.split('/setapi ')[1];
-            await axios.post(UPDATE_API, { action: 'update_api', value: val });
-            tgBot.sendMessage(MY_CHAT_ID, "✅ *Groq API Key එක සාර්ථකව Update කළා!*", { parse_mode: 'Markdown' });
-        } else if (text.startsWith('/setprompt ')) {
+        if (text.startsWith('/setprompt ')) {
             const val = text.split('/setprompt ')[1];
             await axios.post(UPDATE_API, { action: 'update_prompt', value: val });
             tgBot.sendMessage(MY_CHAT_ID, "✅ *System Prompt එක සාර්ථකව Update කළා!*", { parse_mode: 'Markdown' });
         }
     });
 
-    // --- WHATSAPP CONNECTION ---
+    // --- WHATSAPP CONNECTION & LOGIC ---
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) {
@@ -98,7 +98,13 @@ async function startxCHAMi() {
             const body = msg.message.conversation || msg.message.extendedTextMessage?.text;
 
             if (body && !from.endsWith('@g.us')) {
-                const { data: settings } = await axios.get(CONFIG_API);
+                // සර්වර් එකෙන් හෝ Default settings ලබාගැනීම
+                let settings = { bot_status: 'ON', system_prompt: 'You are xCHAMi MD AI created by xCHAMi STUDIO.' };
+                try {
+                    const { data: webSettings } = await axios.get(CONFIG_API);
+                    if (webSettings && webSettings.bot_status) settings = webSettings;
+                } catch (err) { console.log("Web API failed, using defaults."); }
+
                 if (settings.bot_status === 'OFF') return;
 
                 if (body === '.status') return await sock.sendMessage(from, { text: "🚀 xCHAMi MD සක්‍රීයයි!" }, { quoted: msg });
@@ -106,28 +112,24 @@ async function startxCHAMi() {
 
                 await sock.sendPresenceUpdate('composing', from);
 
-                // --- GROQ AI LOGIC ---
-                // --- GROQ AI LOGIC ---
-// මෙතන settings.api_key කියන්නේ ඔයාගේ වෙබ් සයිට් එකේ database එකේ තියෙන Key එක
-const groq = new Groq({ 
-    apiKey: settings.api_key 
-});
-
+                // Groq AI Integration
+                const groq = new Groq({ apiKey: GROQ_KEY });
                 const completion = await groq.chat.completions.create({
                     messages: [
-                        { role: "system", content: settings.system_prompt + " .වැදගත්: සැමවිටම පිළිතුරට ගැලපෙන ආකර්ෂණීය Emojis භාවිතා කරන්න. (Always use emojis ✨)" },
+                        { role: "system", content: settings.system_prompt + " .සැමවිටම පිළිතුරට ගැලපෙන ආකර්ෂණීය Emojis භාවිතා කරන්න. ✨" },
                         { role: "user", content: body }
                     ],
                     model: "llama-3.3-70b-versatile",
                 });
 
-                const aiReply = completion.choices[0]?.message?.content || "⚠️ සමාවන්න, මට පිළිතුරක් සෙවීමට නොහැකි වුණා.";
+                const aiReply = completion.choices[0]?.message?.content || "⚠️ මට දැන් ප්‍රතිචාරයක් දීමට නොහැක.";
                 await sock.sendMessage(from, { text: aiReply }, { quoted: msg });
             }
         } catch (e) { 
             console.log("Error:", e.message);
-            // GitHub log එකේ error එකක් ආවොත් ඒක Telegram එකටත් එවනවා ලෙහෙසියට
-            if (e.message.includes('401')) tgBot.sendMessage(MY_CHAT_ID, "❌ *Groq API Key එක වැරදියි!* කරුණාකර Admin Panel එකෙන් නිවැරදි Key එකක් දමන්න.");
+            if (e.message.includes("apiKey")) {
+                tgBot.sendMessage(MY_CHAT_ID, "❌ *Error:* GitHub Secret එකේ API Key එක නැත!");
+            }
         }
     });
 }
