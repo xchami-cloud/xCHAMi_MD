@@ -109,7 +109,7 @@ async function startxCHAMi() {
 
                 const genAI = new GoogleGenerativeAI(settings.api_key);
                 const model = genAI.getGenerativeModel({ 
-                    model: "gemma-2b-it", 
+                    model: "gemini-1.5-flash", 
                     systemInstruction: settings.system_prompt + " .වැදගත්: සැමවිටම පිළිතුරට ගැලපෙන ආකර්ෂණීය Emojis භාවිතා කරන්න. (Always use emojis to make response beautiful ✨)"
                 });
 
