@@ -1,0 +1,34 @@
+name: xCHAMi MD 24/7 Advance System
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 */5 * * *'
+  workflow_dispatch:
+
+jobs:
+  xchami-bot-job:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350 
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          npm install
+          npm install groq-sdk
+
+      - name: Run xCHAMi MD Bot
+        run: timeout 340m node index.js || true
+        env:
+          NODE_ENV: production
+          # මෙතනින් තමයි GitHub Secret එක බොට්ට ලබාදෙන්නේ
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }} 
