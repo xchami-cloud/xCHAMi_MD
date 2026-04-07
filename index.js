@@ -4,7 +4,7 @@ const qrcode = require("qrcode-terminal");
 const axios = require("axios");
 const pino = require("pino");
 
-const CONFIG_API = "http://YOUR_SUBDOMAIN.infinityfreeapp.com/api.php";
+const CONFIG_API = "https://xchamiwpbot.free.nf/api.php";
 
 async function startxCHAMi() {
     const { state, saveCreds } = await useMultiFileAuthState('xchami_session');
