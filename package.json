@@ -1,14 +1,20 @@
 {
-  "name": "xchami-md-advanced",
-  "version": "1.1.0",
+  "name": "xchami-md-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp AI Bot powered by Groq and Baileys",
   "main": "index.js",
-  "scripts": { "start": "node index.js" },
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.6.0",
-    "@google/generative-ai": "^0.3.0",
-    "node-telegram-bot-api": "^0.64.0",
-    "qrcode": "^1.5.3",
-    "axios": "^1.6.7",
-    "pino": "^8.19.0"
-  }
+    "@whiskeysockets/baileys": "latest",
+    "groq-sdk": "latest",
+    "node-telegram-bot-api": "latest",
+    "qrcode": "latest",
+    "axios": "latest",
+    "pino": "latest",
+    "link-preview-js": "latest"
+  },
+  "author": "xCHAMi STUDIO",
+  "license": "ISC"
 }
