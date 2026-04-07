@@ -7,7 +7,7 @@ const pino = require("pino");
 
 // --- CONFIGURATION ---
 const CONFIG_API = "https://xchamiwpbot.free.nf/api.php";
-const UPDATE_API = "http://YOUR_SUBDOMAIN.infinityfreeapp.com/update_settings.php"; 
+const UPDATE_API = "https://xchamiwpbot.free.nf/update_settings.php"; 
 const TELEGRAM_TOKEN = '8442632780:AAH2Qn37FZ3tWI2UWH1BkLL-ypgdYfG2ZCM';
 const MY_CHAT_ID = '5874012720';
 
