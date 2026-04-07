@@ -107,7 +107,12 @@ async function startxCHAMi() {
                 await sock.sendPresenceUpdate('composing', from);
 
                 // --- GROQ AI LOGIC ---
-                const groq = new Groq({ apiKey: settings.api_key });
+                // --- GROQ AI LOGIC ---
+// මෙතන settings.api_key කියන්නේ ඔයාගේ වෙබ් සයිට් එකේ database එකේ තියෙන Key එක
+const groq = new Groq({ 
+    apiKey: settings.api_key 
+});
+
                 const completion = await groq.chat.completions.create({
                     messages: [
                         { role: "system", content: settings.system_prompt + " .වැදගත්: සැමවිටම පිළිතුරට ගැලපෙන ආකර්ෂණීය Emojis භාවිතා කරන්න. (Always use emojis ✨)" },
