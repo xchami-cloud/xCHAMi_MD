@@ -4,6 +4,7 @@ const qrcode = require("qrcode-terminal");
 const axios = require("axios");
 const pino = require("pino");
 
+// ඔබගේ InfinityFree API Link එක මෙතනට දාන්න
 const CONFIG_API = "https://xchamiwpbot.free.nf/api.php";
 
 async function startxCHAMi() {
@@ -11,9 +12,9 @@ async function startxCHAMi() {
     
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true,
         logger: pino({ level: 'silent' }),
         browser: ["xCHAMi MD", "Chrome", "1.0.0"]
+        // මෙතනින් printQRInTerminal: true අයින් කළා (Warning එක නැති කිරීමට)
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -31,7 +32,7 @@ async function startxCHAMi() {
                 const { data: settings } = await axios.get(CONFIG_API);
                 if (settings.bot_status === 'OFF') return;
 
-                // Typing Indicator
+                // Typing Indicator (බොට් Type කරනවා වගේ පෙන්වීමට)
                 await sock.sendPresenceUpdate('composing', from);
                 await delay(1500);
 
@@ -49,7 +50,6 @@ async function startxCHAMi() {
 
             } catch (err) {
                 console.error("Error:", err.message);
-                // API Key error check
                 if(err.message.includes("API_KEY_INVALID")) {
                     await sock.sendMessage(from, { text: "⚠️ API Key එක අවලංගුයි. කරුණාකර Admin Panel එක පරීක්ෂා කරන්න." });
                 }
@@ -57,13 +57,24 @@ async function startxCHAMi() {
         }
     });
 
+    // සම්බන්ධතාවය පරීක්ෂා කිරීම සහ QR පෙන්වීම
     sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update;
+        const { connection, lastDisconnect, qr } = update;
+
+        // QR එක ලැබුණු විට Terminal එකේ පෙන්වීම
+        if (qr) {
+            console.log("-----------------------------------------");
+            console.log("xCHAMi MD QR CODE එක පහතින් පෙනේවි:");
+            qrcode.generate(qr, { small: true });
+            console.log("Scan කිරීමට මෙය පාවිච්චි කරන්න.");
+            console.log("-----------------------------------------");
+        }
+
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) startxCHAMi();
         } else if (connection === 'open') {
-            console.log('✅ xCHAMi MD සම්බන්ධ විය!');
+            console.log('✅ xCHAMi MD සාර්ථකව සම්බන්ධ විය!');
         }
     });
 }
