@@ -1,0 +1,22 @@
+name: xCHAMi-MD-Runner
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */4 * * *' # සෑම පැය 4කට වරක් රීස්ටාර්ට් වේ
+
+jobs:
+  start-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Libraries
+        run: npm install @whiskeysockets/baileys @google/generative-ai qrcode-terminal axios pino
+      - name: Run xCHAMi MD
+        run: node index.js
