@@ -1,0 +1,37 @@
+name: xCHAMi-MD-Advanced-Runner
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *' # සෑම පැය 6කට වරක්ම බොට්ව ස්වයංක්‍රීයව Restart කරයි
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20' # අලුත්ම Baileys version එකට Node 20 හොඳම වේ
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run xCHAMi MD Bot
+        run: node index.js
+        env:
+          NODE_ENV: production
